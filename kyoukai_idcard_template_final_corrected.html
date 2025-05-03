@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>境界環局 IDカード生成</title>
+  <style>
+    body {
+      font-family: 'Shippori Mincho', serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .card {
+      width: 480px;
+      height: 280px;
+      background-color: white;
+      background-image: url('chess_gradient_background.png');
+      background-size: cover;
+      background-position: left bottom;
+      border: 3px solid #3B469B;
+      border-radius: 12px;
+      margin: 0 auto;
+      padding: 16px;
+      text-align: left;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .header-line {
+      margin-bottom: 6px;
+      height: 16px;
+      background-color: #3B469B;
+      margin-bottom: 4px;
+    }
+    .sub-line {
+      height: 4px;
+      background-color: #C1C9FF;
+      margin-bottom: 8px;
+    }
+    .photo {
+      width: 130px;
+      height: 170px;
+      width: 140px;
+      height: 180px;
+      background-color: #ccc;
+      float: left;
+      border-radius: 10px;
+      margin-right: 16px;
+    }
+    .info {
+      font-size: 14px;
+    }
+    .info strong {
+      font-size: 18px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .logo {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 60px;
+    }
+    .slogan {
+      position: absolute;
+      bottom: 6px;
+      left: 16px;
+      font-size: 10px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h2>境界環局 IDカード入力</h2>
+
+  <label>氏名：<input type="text" id="nameInput" placeholder="例：山田太郎"></label><br>
+  <label>コードネーム：<input type="text" id="codeInput" placeholder="例：RAVEN-04"></label><br>
+
+  <label>部署：
+    <select id="divisionSelect" onchange="updateSections(); updatePositions();">
+      <option>封印実行部</option>
+      <option>情報観測部</option>
+      <option>管理統制部</option>
+      <option>特殊技術研究部</option>
+    </select>
+  </label><br>
+
+  <label>課：
+    <select id="sectionSelect"></select>
+  </label><br>
+
+  <label>職階：
+    <select id="positionInput" onchange="updateCard()"></select>
+  </label><br>
+
+  <label>支局：
+    <select id="branchSelect" onchange="updateCard()">
+      <option>東京支局</option>
+      <option>大阪支局</option>
+      <option>京都支局</option>
+      <option>名古屋支局</option>
+      <option>福岡支局</option>
+    </select>
+  </label><br>
+
+  <label>個別ID（6桁）：<input type="text" id="idInput" placeholder="例：427153" maxlength="6" onchange="updateCard()"></label><br>
+
+  <label>承認ランク：
+    <select id="authInput" onchange="updateCard()">
+      <option>LV.1</option>
+      <option>LV.2</option>
+      <option>LV.3</option>
+      <option>LV.4</option>
+      <option>LV.5</option>
+    </select>
+  </label><br><br>
+
+  顔写真アップロード：<input type="file" id="photoInput" accept="image/*" onchange="updatePhoto()" /><br><br>
+
+  <div class="card" id="idCard">
+    <div class="header-line"></div>
+    <div class="sub-line"></div>
+    <div class="photo" id="photoBox"></div>
+    <div class="info">
+      <strong id="nameField">氏名：</strong>
+      <span id="codeField">コード名：</span><br>
+      <span id="sectionField">所属：</span><br>
+      <span id="positionField">職階：</span><br>
+      <span id="idField">識別番号：</span><br>
+      <span id="authField">承認ランク：</span>
+    </div>
+    <img src="soukou_mincho_kyoukai_logo.png" class="logo" />
+    <div class="slogan">世界の綻びに触れる者、それは同時に世界に裁かれる者</div>
+  </div><br>
+
+  <button onclick="downloadCard()">IDカードを画像保存</button>
+
+  <script>
+    const sectionMap = {
+      "封印実行部": ["修復課", "補者課", "支援課"],
+      "情報観測部": ["監察課", "精神分析課", "記録課"],
+      "管理統制部": ["機密保全課", "外部連携課", "内部監査課"],
+      "特殊技術研究部": ["装備開発課", "綻因適応課", "核研究課"]
+    };
+
+    const positionMap = {
+      "封印実行部": ["一般補者/P1", "上位補者/P2", "高位補者/P3", "特務補者/PX"],
+      "情報観測部": ["一般分析官/A1", "上級分析官/A2", "精神解析官/AM", "特任観測官/AX"],
+      "管理統制部": ["局員/G1", "管理官/G2", "審問監察官/GV", "特務統制官/GX"],
+      "特殊技術研究部": ["研究技術員/T1", "上級技術主任/T2", "適応管理官/TD", "特任技術責任者/TX"]
+    };
+
+    function updateSections() {
+      const division = document.getElementById("divisionSelect").value;
+      const sectionSelect = document.getElementById("sectionSelect");
+      sectionSelect.innerHTML = "";
+      sectionMap[division].forEach(sec => {
+        const opt = document.createElement("option");
+        opt.textContent = sec;
+        sectionSelect.appendChild(opt);
+      });
+      updateCard();
+    }
+
+    function updatePositions() {
+      const division = document.getElementById("divisionSelect").value;
+      const positionSelect = document.getElementById("positionInput");
+      positionSelect.innerHTML = "";
+      positionMap[division].forEach(pos => {
+        const opt = document.createElement("option");
+        opt.textContent = pos;
+        positionSelect.appendChild(opt);
+      });
+      updateCard();
+    }
+
+    function updateCard() {
+      const name = document.getElementById("nameInput").value;
+      const code = document.getElementById("codeInput").value;
+      const division = document.getElementById("divisionSelect").value;
+      const section = document.getElementById("sectionSelect").value;
+      const position = document.getElementById("positionInput").value;
+      const branch = document.getElementById("branchSelect").value;
+      const id = document.getElementById("idInput").value;
+      const auth = document.getElementById("authInput").value;
+
+      document.getElementById("nameField").textContent = "氏名：" + name;
+      document.getElementById("codeField").textContent = "コード名：" + code;
+      document.getElementById("sectionField").textContent = "所属：" + division + "/" + section;
+      document.getElementById("positionField").textContent = "職階：" + position;
+      const branchCode = { "東京支局": "TKS", "大阪支局": "OSK", "京都支局": "KYO", "名古屋支局": "NGY", "福岡支局": "FKU" }[branch];
+      const sectionCode = { "修復課": "RF", "補者課": "EX", "支援課": "AS", "監察課": "OV", "精神分析課": "MN", "記録課": "RC", "機密保全課": "SC", "外部連携課": "EL", "内部監査課": "IN", "装備開発課": "AR", "綻因適応課": "AD", "核研究課": "CR" }[section];
+      const positionCode = position.split("/")[1];
+      document.getElementById("idField").textContent = "識別番号：" + branchCode + "-" + sectionCode + "-" + positionCode;
+      document.getElementById("authField").textContent = "承認ランク：" + auth;
+    }
+
+    function updatePhoto() {
+      const file = document.getElementById("photoInput").files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById("photoBox").style.backgroundImage = `url(${e.target.result})`;
+        document.getElementById("photoBox").style.backgroundSize = "cover";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function downloadCard() {
+      html2canvas(document.getElementById("idCard")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "kyoukai_idcard.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    updateSections();
+    updatePositions();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</body>
+</html>
